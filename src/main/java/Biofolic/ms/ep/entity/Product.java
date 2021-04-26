@@ -1,9 +1,13 @@
-package Biofolic.ms.ep;
+package Biofolic.ms.ep.entity;
 
-public class CreateBookingResponse {
+public class Product {
     String id;
 
-    public CreateBookingResponse() {
+    public Product() {
+    }
+
+    public Product(String id) {
+        this.id = id;
     }
 
     public String getId() {

@@ -1,4 +1,4 @@
-package Biofolic.ms.ep;
+package Biofolic.ms.ep.entity;
 
 import java.util.List;
 
@@ -20,6 +20,9 @@ public class CreateBooking {
     }
 
     public CreateBooking() {
+    }
+
+    public CreateBooking(String calendar_id, String test_api_booking, List<Product> products, String other_booking, String suggestedTime, String endTime) {
     }
 
     public String getStart() {

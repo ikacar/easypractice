@@ -1,4 +1,4 @@
-package Biofolic.ms.ep;
+package Biofolic.ms.ep.entity;
 
 import java.util.List;
 

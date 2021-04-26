@@ -1,4 +1,4 @@
-package Biofolic.ms.ep;
+package Biofolic.ms.ep.entity;
 
 public class ProductTime {
     String suggestedTime;
