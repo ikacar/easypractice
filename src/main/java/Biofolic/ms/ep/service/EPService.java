@@ -57,56 +57,70 @@ public class EPService {
 
     public String bookProduct(ProductTime productTime){
 
-        String date = productTime.getSuggestedTime().substring(0,10);
-        System.out.println("date: " + productTime.getSuggestedTime());
-        //uzmi datum, za njega vidi slobodne dane i savi ih u int availablle. napravi response entity od njih i provri da li je available > 2 ako jeste salji ih nazad, ako nije, nastavi u for petlji
-        String getBookedTimesAddress = epAddress + "/online-booking/available-times?date="+date+"&product_ids[]="+productTime.getProductId()+"&calendar_id="+calendar_id;
-        HttpHeaders headers = getAuthorizationHeader();
 
-        HttpEntity entityTime = new HttpEntity<>(headers);
-        RestTemplate restTemplate = new RestTemplate();
+        try{
+            String date = productTime.getSuggestedTime().substring(0,10);
+//            System.out.println("date: " + productTime.getSuggestedTime());
+            //uzmi datum, za njega vidi slobodne dane i savi ih u int availablle. napravi response entity od njih i provri da li je available > 2 ako jeste salji ih nazad, ako nije, nastavi u for petlji
+            String getBookedTimesAddress = epAddress + "/online-booking/available-times?date="+date+"&product_ids[]="+productTime.getProductId()+"&calendar_id="+calendar_id+"&page_size=16";
+            HttpHeaders headers = getAuthorizationHeader();
+
+            HttpEntity entityTime = new HttpEntity<>(headers);
+            RestTemplate restTemplate = new RestTemplate();
 
 
-        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
-        ResponseEntity<EPDateResponse> timesReposnse;
+            restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+            ResponseEntity<EPDateResponse> timesReposnse;
 
-        timesReposnse = restTemplate.exchange(getBookedTimesAddress, HttpMethod.GET, entityTime,EPDateResponse.class);
-        List<EPDate> times = timesReposnse.getBody().getData();
-        if(times.isEmpty()) return null;
-        boolean foundedTime=false;
-        for (EPDate time : times) {
-            if(time.getDate().equals(productTime.getSuggestedTime())){
-                if(time.isAvailable()){
+            timesReposnse = restTemplate.exchange(getBookedTimesAddress, HttpMethod.GET, entityTime,EPDateResponse.class);
+            List<EPDate> times = timesReposnse.getBody().getData();
+            if(times.isEmpty()) return null;
+            boolean foundedTime=false;
+            for (EPDate time : times) {
+                if(time.getDate().equals(productTime.getSuggestedTime())){
+                    if(time.isAvailable()){
 
-                    foundedTime=true;
+                        foundedTime=true;
+                    }
+                    else return null;
                 }
-                else return null;
             }
+            if(foundedTime){
+                String createAppointment = epAddress + "bookings";
+
+                List<Product> products = new ArrayList<>();
+                products.add(new Product(productTime.getProductId()));
+                String endTime =productTime.getSuggestedTime().substring(11,13);
+                int endTimeInt =Integer.parseInt(endTime);
+                endTimeInt++;
+//                System.out.println(endTimeInt);
+                if(endTimeInt>23) return null;
+                endTime=productTime.getSuggestedTime().substring(0,11)+ String.valueOf(endTimeInt) + productTime.getSuggestedTime().substring(13);
+//                System.out.println(productTime.getSuggestedTime());
+//                System.out.println(endTime);
+                CreateBooking booking = new CreateBooking();
+                booking.setCalendar_id(calendar_id);
+                booking.setStart(productTime.getSuggestedTime());
+                booking.setEnd(endTime);
+                booking.setHeading(productTime.getName());
+                booking.setProducts(products);
+                booking.setType("other_booking");
+                HttpEntity entityBook = new HttpEntity<>(booking ,headers);
+                RestTemplate restTemplateBook = new RestTemplate();
+
+                restTemplateBook.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+                ResponseEntity<CreateBookingResponseWrapper> response;
+
+                response = restTemplateBook.exchange(createAppointment, HttpMethod.POST, entityBook,CreateBookingResponseWrapper.class);
+                if(response.getStatusCode().is2xxSuccessful()) return response.getBody().getData().getId();
+                else return "connection";
+            }
+            return null;
         }
-        if(foundedTime){
-            String createAppointment = epAddress + "bookings";
-
-            List<Product> products = new ArrayList<>();
-            products.add(new Product(productTime.getProductId()));
-
-            String endTime =productTime.getSuggestedTime().substring(11,13);
-            int endTimeInt =Integer.parseInt(endTime);
-            endTimeInt++;
-            if(endTimeInt>23) return null;
-            endTime=productTime.getSuggestedTime().substring(0,11)+ String.valueOf(endTimeInt) + productTime.getSuggestedTime().substring(13);
-
-            CreateBooking booking = new CreateBooking(calendar_id,"test api booking",products,"other_booking",productTime.getSuggestedTime(),endTime);
-
-            HttpEntity entityBook = new HttpEntity<>( booking ,headers);
-            RestTemplate restTemplateBook = new RestTemplate();
-
-            restTemplateBook.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
-            ResponseEntity<CreateBookingResponseWrapper> response;
-
-            response = restTemplateBook.exchange(createAppointment, HttpMethod.POST, entityBook,CreateBookingResponseWrapper.class);
-            if(response.getStatusCode().is2xxSuccessful()) return response.getBody().getData().getId();
+        catch(Exception e){
+            return "connection";
         }
-        return null;
+
     }
     private String getToDate(String startDate) throws ParseException {
         Calendar cal = Calendar.getInstance();
@@ -154,7 +168,7 @@ public class EPService {
     }
     public boolean deleteBooking(String bookingId){
         String deleteBookingAddress = epAddress + "bookings/"+bookingId;
-        System.out.println(deleteBookingAddress);
+//        System.out.println(deleteBookingAddress);
 
         HttpHeaders headers = getAuthorizationHeader();
 

@@ -19,7 +19,7 @@ public class Controller {
     @Autowired
     EPService epService;
     //todo promeni return parametar
-    @GetMapping("/product/times")
+    @PostMapping("/product/times")
     public ResponseEntity< List<ProductWeekResponse>> getBookedDays(@RequestBody List<ProductWeek> productsWeekList) throws ParseException {
 
             return epService.getAvailable(productsWeekList);
@@ -31,6 +31,9 @@ public class Controller {
         String response = epService.bookProduct(productTime);
         if(response==null){
             return new ResponseEntity("Already booked!",HttpStatus.NOT_FOUND);
+        }
+        if(response.equals("connection")){
+            return new ResponseEntity("Connection to EasyPractice problem",HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
     }

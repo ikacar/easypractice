@@ -3,8 +3,16 @@ package Biofolic.ms.ep.entity;
 public class ProductTime {
     String suggestedTime;
     String productId;
-
+    String name;
     public ProductTime() {
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
     }
 
     public String getSuggestedTime() {
