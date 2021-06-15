@@ -18,7 +18,7 @@ public class EPService {
     String epToken;
     @Value("#{${easy.practice.address}}")
     String epAddress;
-    String calendar_id="76994";
+    String calendar_id="79967";
 
 
     public ResponseEntity< List<ProductWeekResponse>> getAvailable(List<ProductWeek> productsWeekList){
@@ -57,7 +57,9 @@ public class EPService {
 
     public String bookProduct(ProductTime productTime){
 
-
+        Map<String,String> map = new HashMap<>();
+        map.put("109468","ADVANCED");
+        map.put("109816","ESSENTIALS");
         try{
             String date = productTime.getSuggestedTime().substring(0,10);
 //            System.out.println("date: " + productTime.getSuggestedTime());
@@ -74,7 +76,7 @@ public class EPService {
 
             timesReposnse = restTemplate.exchange(getBookedTimesAddress, HttpMethod.GET, entityTime,EPDateResponse.class);
             List<EPDate> times = timesReposnse.getBody().getData();
-            if(times.isEmpty()) return null;
+            if(times.isEmpty()) return "busy";
             boolean foundedTime=false;
             for (EPDate time : times) {
                 if(time.getDate().equals(productTime.getSuggestedTime())){
@@ -82,7 +84,7 @@ public class EPService {
 
                         foundedTime=true;
                     }
-                    else return null;
+                    else return "busy";
                 }
             }
             if(foundedTime){
@@ -94,17 +96,19 @@ public class EPService {
                 int endTimeInt =Integer.parseInt(endTime);
                 endTimeInt++;
 //                System.out.println(endTimeInt);
-                if(endTimeInt>23) return null;
+                if(endTimeInt>23) return "busy";
                 endTime=productTime.getSuggestedTime().substring(0,11)+ String.valueOf(endTimeInt) + productTime.getSuggestedTime().substring(13);
-//                System.out.println(productTime.getSuggestedTime());
-//                System.out.println(endTime);
+                System.out.println(productTime.getSuggestedTime());
+                System.out.println(endTime);
                 CreateBooking booking = new CreateBooking();
                 booking.setCalendar_id(calendar_id);
                 booking.setStart(productTime.getSuggestedTime());
                 booking.setEnd(endTime);
-                booking.setHeading(productTime.getName());
+                booking.setHeading(map.get(productTime.getProductId()));
                 booking.setProducts(products);
-                booking.setType("other_booking");
+                booking.setType("client_booking");
+                booking.setNotes(productTime.getName());
+                booking.setClient_id("1596804");
                 HttpEntity entityBook = new HttpEntity<>(booking ,headers);
                 RestTemplate restTemplateBook = new RestTemplate();
 
@@ -115,7 +119,7 @@ public class EPService {
                 if(response.getStatusCode().is2xxSuccessful()) return response.getBody().getData().getId();
                 else return "connection";
             }
-            return null;
+            return "busy";
         }
         catch(Exception e){
             return "connection";
@@ -181,5 +185,40 @@ public class EPService {
         response = restTemplate.exchange(deleteBookingAddress, HttpMethod.DELETE, entity,ResponseEntity.class);
         if(response.getStatusCode().is2xxSuccessful()) return true;
         return false;
+    }
+    public List<DateBooked> getBookedDates(CheckBookings checkBookings){
+        HttpHeaders headers = getAuthorizationHeader();
+
+        String getBookedDatesAddress = epAddress + "bookings?start="+checkBookings.getStartDate()+"&end="+checkBookings.getEndDate()+"&calendar_id="+calendar_id+"&page_size=1000";
+
+        HttpEntity entity = new HttpEntity<>(headers);
+        RestTemplate restTemplate = new RestTemplate();
+        restTemplate.setRequestFactory(new HttpComponentsClientHttpRequestFactory());
+        ResponseEntity<EPBookedResponse> bookings;
+        try{
+            bookings = restTemplate.exchange(getBookedDatesAddress, HttpMethod.GET, entity,EPBookedResponse.class);
+
+        }
+        catch(Exception e){
+            return null;
+        }
+
+        if(bookings!=null && bookings.getBody()!=null && bookings.getBody().getData()!=null){
+            return bookings.getBody().getData();
+        }
+        else return null;
+    }
+    public List<ProductTime> bookAllProduct(List<ProductTime> productTimeList){
+
+        for (ProductTime productTime : productTimeList) {
+            String response = bookProduct(productTime);
+            if(response==null || response.equals("connection")) return null;
+            if (response.equals("busy")) {
+                productTime.setStatus("Already booked");
+            } else {
+                productTime.setStatus("OK");
+            }
+        }
+        return productTimeList;
     }
 }

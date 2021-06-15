@@ -4,6 +4,16 @@ public class ProductTime {
     String suggestedTime;
     String productId;
     String name;
+    String status;
+
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
     public ProductTime() {
     }
 
