@@ -167,8 +167,18 @@ public class EPService {
         headers.add("Authorization", "Bearer " + epToken);
         return headers;
     }
-    public boolean updateBooking(BookingTime bookingTime){
-        return true;
+    public ProductTime updateBooking(ProductTime productTime){
+
+        String response = this.bookProduct(productTime);
+        if(response==null || response.equals("connection")) return null;
+        if (response.equals("busy")) {
+            productTime.setStatus("Already booked");
+        } else {
+            productTime.setStatus("OK");
+            productTime.setBookingId(response);
+        }
+        return productTime;
+
     }
     public boolean deleteBooking(String bookingId){
         String deleteBookingAddress = epAddress + "bookings/"+bookingId;
@@ -217,6 +227,7 @@ public class EPService {
                 productTime.setStatus("Already booked");
             } else {
                 productTime.setStatus("OK");
+                productTime.setBookingId(response);
             }
         }
         return productTimeList;

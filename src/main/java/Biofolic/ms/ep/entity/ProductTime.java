@@ -5,6 +5,7 @@ public class ProductTime {
     String productId;
     String name;
     String status;
+    String bookingId;
 
     public String getStatus() {
         return status;
@@ -39,5 +40,13 @@ public class ProductTime {
 
     public void setProductId(String productId) {
         this.productId = productId;
+    }
+
+    public String getBookingId() {
+        return bookingId;
+    }
+
+    public void setBookingId(String bookingId) {
+        this.bookingId = bookingId;
     }
 }

@@ -48,10 +48,13 @@ public class Controller {
         return new ResponseEntity(response, HttpStatus.OK);
     }
     @PostMapping("/product/book/update")
-    public ResponseEntity<Boolean> updateBooking(@RequestBody BookingTime bookingTime) throws ParseException {
-        boolean response = epService.updateBooking(bookingTime);
-        if(!response){
-            return new ResponseEntity("Already booked!",HttpStatus.NOT_FOUND);
+    public ResponseEntity<String> updateBooking(@RequestBody ProductTime productTime) throws ParseException {
+        if(productTime.getBookingId()==null){
+            return  new ResponseEntity("Booking id is not provided!", HttpStatus.BAD_REQUEST);
+        }
+        String response = epService.updateBooking(productTime);
+        if(response==null || response.isEmpty()){
+            return new ResponseEntity("Connection to EasyPractice problem",HttpStatus.NOT_FOUND);
         }
         return new ResponseEntity<>(response, HttpStatus.OK);
     }
